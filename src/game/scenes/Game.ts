@@ -14,7 +14,7 @@ export class Game extends Scene {
     preload() {
         this.load.setPath('assets');
         this.load.image('bullet', 'ball.png'); // Carga la imagen de la bala
-        this.load.image('enemyBullet', 'ball.png'); // Carga la imagen de la bala enemiga
+        this.load.image('enemyBullet', 'ballEnemy.png'); // Carga la imagen de la bala enemiga
         this.load.image('mech', 'mech.png');
         this.load.image('bullet', 'bullet.png'); // Carga la imagen de la bala
         this.load.image('cannonTank', 'canonTank.png');
@@ -34,7 +34,7 @@ export class Game extends Scene {
         this.player.player.setDepth(2);
     
         // Configura los límites del mundo
-        this.physics.world.setBounds(0, 0, 1280, 900); // Ajusta según el tamaño de tu mapa
+        this.physics.world.setBounds(0, 0, 1920, 1080); // Ajusta según el tamaño de tu mapa
     
         EventBus.emit('current-scene-ready', this);
         this.anims.create({
@@ -45,9 +45,9 @@ export class Game extends Scene {
         });
 
         // Generar enemigos
-        for (let i = 0; i < 5; i++) {
-            const x = Phaser.Math.Between(100, 700); // Rango dentro del mapa visible
-            const y = Phaser.Math.Between(100, 500);
+        for (let i = 0; i < 10; i++) {
+            const x = Phaser.Math.Between(1920, 0); // Rango dentro del mapa visible
+            const y = Phaser.Math.Between(0, 1080);
             const enemy = new Enemy(this, this.player.player);
             enemy.create(x, y); // Posición aleatoria del enemigo
             this.enemies.push(enemy);

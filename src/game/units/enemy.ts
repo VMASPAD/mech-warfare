@@ -7,7 +7,7 @@ export class Enemy {
         this.player = player;
         this.enemy = null;
         this.cannon = null;
-        this.health = 5;
+        this.health = 3;
         this.healthBar = null;
         this.bullets = this.scene.physics.add.group();
         this.shootDelay = 1000; // Intervalo de disparo en milisegundos
@@ -15,7 +15,6 @@ export class Enemy {
         this.tankRotationSpeed = 0.1; // Velocidad de rotación del tanque (más lenta)
         this.cannonRotationSpeed = 0.2; // Velocidad de rotación del cañón (más rápida)
     }
-
 
     preload() { 
     }
@@ -54,7 +53,7 @@ export class Enemy {
 
     createHealthBar() {
         const barWidth = 50;
-        const barHeight = 5;
+        const barHeight = 10; // Cambia la altura a 10px
         const xOffset = 0;
         const yOffset = -30; // Ajustado para que esté más cerca del tanque
 
@@ -73,7 +72,7 @@ export class Enemy {
             this.enemy.x - 25,
             this.enemy.y - 30, // Ajustado para que esté más cerca del tanque
             50 * healthPercentage,
-            5
+            5 // Cambia la altura a 10px
         );
     }
 
@@ -137,16 +136,24 @@ export class Enemy {
         sprite.on('animationcomplete', () => {
             sprite.destroy(); // Eliminar el sprite
         });
+        
         if (this.health <= 0) {
             console.log("Enemy destroyed!");
             this.isAlive = false; // Establecer que el enemigo ya no está vivo
             this.enemy.destroy(); // Destruir el tanque enemigo
             this.cannon.destroy(); // Destruir el cañón
             this.healthBar.destroy(); // Destruir la barra de vida
+            this.scene.time.delayedCall(1000, this.onEnemyDestroyed, [], this); // Espera un segundo antes de permitir el movimiento de los enemigos
         }
     }
 
+    onEnemyDestroyed() {
+        // Lógica para permitir que los enemigos se muevan nuevamente
+        // Por ejemplo, reiniciar su posición o estado
+    }
+
     update() {
+        // Verificar si el enemigo está vivo, inicializado y el jugador también está presente
         if (!this.isAlive || !this.enemy || !this.player) {
             console.warn('Enemy is not alive or not initialized, skipping update');
             return;
@@ -155,8 +162,19 @@ export class Enemy {
         const angle = Phaser.Math.Angle.Between(this.enemy.x, this.enemy.y, this.player.x, this.player.y);
         const speed = 100;
     
-        this.scene.physics.moveTo(this.enemy, this.player.x, this.player.y, speed);
-
+        if (!this.player || !this.player.x || !this.player.y) {
+            console.warn('Player no está disponible, omitiendo movimiento del enemigo');
+            return;
+        }
+    
+        // Verificar si `this.enemy` está definido antes de llamar a `moveTo`
+        if (this.enemy && this.enemy.body) {
+            this.scene.physics.moveTo(this.enemy, this.player.x, this.player.y, speed);
+        } else {
+            console.warn('Enemy no está disponible o no tiene cuerpo físico');
+            return;
+        }
+    
         // Hacer que el tanque gire más lentamente
         this.enemy.rotation = Phaser.Math.Angle.Wrap(
             Phaser.Math.Angle.RotateTo(
@@ -165,10 +183,10 @@ export class Enemy {
                 this.tankRotationSpeed
             )
         );
-
+    
         this.cannon.x = this.enemy.x;
         this.cannon.y = this.enemy.y;
-
+    
         // Hacer que el cañón gire más rápidamente
         this.cannon.rotation = Phaser.Math.Angle.Wrap(
             Phaser.Math.Angle.RotateTo(
@@ -177,7 +195,7 @@ export class Enemy {
                 this.cannonRotationSpeed
             )
         );
-
+    
         // Actualizar la barra de vida para que siga al enemigo
         this.updateHealthBar();
     }
