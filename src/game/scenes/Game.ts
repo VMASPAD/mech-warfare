@@ -5,6 +5,19 @@ import { Player } from '../units/player';
 import { Enemy } from '../units/enemy';
 
 export class Game extends Scene {
+    player: Player | null;
+    enemies: Enemy[];
+    wave: number;
+    enemyCount: number;
+    maxWaves: number;
+    waveText: null;
+    maxWaveText: Phaser.GameObjects.Text | null;
+    isPaused: boolean;
+    pauseButton: Phaser.GameObjects.Image | null;
+    pauseMenu: Phaser.GameObjects.Container | null;
+    pauseOverlay: Phaser.GameObjects.Rectangle | null;
+    returnMenu: Phaser.GameObjects.Text | null;
+    isGameOver: boolean;
     constructor() {
         super('Game');
         this.player = null;
@@ -34,7 +47,9 @@ export class Game extends Scene {
         this.load.image('bgStart', 'bgStart.png'); 
 
         this.player = new Player(this);
-        this.player.preload();
+        if (this.player) {
+            this.player.preload();
+        }
     }
 
     create() {
@@ -46,7 +61,9 @@ export class Game extends Scene {
     
         this.player = new Player(this);
         this.player.create();
-        this.player.player.setDepth(2);
+        if (this.player && this.player.player) {
+            this.player.player.setDepth(2);
+        }
     
         this.physics.world.setBounds(0, 0, 1920, 1080);
     
@@ -63,12 +80,14 @@ export class Game extends Scene {
 
         this.input.on('pointerdown', () => {
             if (!this.isPaused) {
-                const bullet = this.player.shoot();
+                const bullet = this.player ? this.player.shoot() : null;
                 if (bullet) {
                     this.enemies.forEach(enemy => {
-                        this.physics.add.collider(bullet, enemy.enemy, () => {
-                            enemy.takeDamage(bullet.x, bullet.y);
-                        });
+                        if (bullet && enemy.enemy) {
+                            this.physics.add.collider(bullet, enemy.enemy, () => {
+                                enemy.takeDamage(bullet.x, bullet.y);
+                            });
+                        }
                     });
                 }
             }
@@ -105,23 +124,25 @@ export class Game extends Scene {
         this.pauseMenu = this.add.container(960, 540).setDepth(21);
 
         const menuBg = this.add.rectangle(0, 0, 400, 300, 0xffffff).setOrigin(0.5);
-        this.pauseMenu.add(menuBg);
+        if (this.pauseMenu) {
+            this.pauseMenu.add(menuBg);
 
-        const title = this.add.text(0, -100, 'Paused', { fontSize: '32px', color: '#000' }).setOrigin(0.5);
-        this.pauseMenu.add(title);
+            const title = this.add.text(0, -100, 'Paused', { fontSize: '32px', color: '#000' }).setOrigin(0.5);
+            this.pauseMenu.add(title);
 
-        const resumeButton = this.add.text(-75, 0, 'Resume', { fontSize: '24px', color: '#000' })
-            .setInteractive()
-            .on('pointerdown', () => this.resumeGame());
-        this.pauseMenu.add(resumeButton);
+            const resumeButton = this.add.text(-75, 0, 'Resume', { fontSize: '24px', color: '#000' })
+                .setInteractive()
+                .on('pointerdown', () => this.resumeGame());
+            this.pauseMenu.add(resumeButton);
 
-        const quitButton = this.add.text(75, 0, 'Quit', { fontSize: '24px', color: '#000' })
-            .setInteractive()
-            .on('pointerdown', () => {
-                this.resumeGame();  // Asegúrate de reanudar el juego antes de cambiar de escena
-                this.scene.start('Start');
-            });
-        this.pauseMenu.add(quitButton);
+            const quitButton = this.add.text(75, 0, 'Quit', { fontSize: '24px', color: '#000' })
+                .setInteractive()
+                .on('pointerdown', () => {
+                    this.resumeGame();  // Asegúrate de reanudar el juego antes de cambiar de escena
+                    this.scene.start('Start');
+                });
+            this.pauseMenu.add(quitButton);
+        }
     }
  
 
@@ -173,16 +194,16 @@ export class Game extends Scene {
     }
 
     updateHUD() { 
-        this.maxWaveText.setText(`Oleada: ${this.wave} / ${this.maxWaves}`);
+        this?.maxWaveText?.setText(`Oleada: ${this.wave} / ${this.maxWaves}`);
     }
 
-    spawnEnemies(count) {
+    spawnEnemies(count: number) {
         this.enemies = [];
 
         for (let i = 0; i < count; i++) {
             const x = Phaser.Math.Between(0, 1920);
             const y = Phaser.Math.Between(0, 1080);
-            const enemy = new Enemy(this, this.player.player);
+            const enemy = new Enemy(this, this.player?.player || null);
             enemy.create(x, y);
             this.enemies.push(enemy);
         }
@@ -208,7 +229,7 @@ export class Game extends Scene {
         });
     }
 
-    update(time) {
+    update(time: any) {
         if (!this.isPaused && !this.isGameOver) {
             if (this.player) {
                 this.player.update();

@@ -1,6 +1,7 @@
 import { Scene } from "phaser";
 
 export class Start extends Scene {
+    isModalOpen: boolean;
     constructor() {
         super({ key: "Start" });
         this.isModalOpen = false;
