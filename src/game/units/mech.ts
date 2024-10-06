@@ -1,6 +1,9 @@
 import { Player } from './player';
 
 export class Mech extends Phaser.Scene {
+    playerScene: Player;
+    enemyBulletsGroup: Phaser.Physics.Arcade.Group;
+
     constructor() {
         super({ key: 'Mech' });
     }
@@ -20,7 +23,11 @@ export class Mech extends Phaser.Scene {
         });
     
         this.enemyBulletsGroup = this.physics.add.group();
-        this.physics.add.collider(this.playerScene.player, this.enemyBulletsGroup, this.handlePlayerHit, null, this);
+        if (this.playerScene.player) {
+            this.physics.add.collider(this.playerScene.player, this.enemyBulletsGroup, this.handlePlayerHit as unknown as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback, undefined, this);
+        } else {
+            console.warn('Player is not initialized');
+        }
     }
     
 
@@ -28,12 +35,24 @@ export class Mech extends Phaser.Scene {
         this.playerScene.update();
     }
 
-    handlePlayerHit(player, bullet) {
-        bullet.destroy(); // Destroy the bullet
+    handlePlayerHit(player: Phaser.Types.Physics.Arcade.GameObjectWithBody, bullet: Phaser.Types.Physics.Arcade.GameObjectWithBody) {
+        const playerWithDamage = player as unknown as { damage: () => void };
+        const bulletWithDestroy = bullet as unknown as { destroy: () => void };
+        
+        bulletWithDestroy.destroy(); // Destroy the bullet
         
         // Apply damage to the player
-        if (player.damage && typeof player.damage === 'function') {
-            player.damage(); // Call the player's damage method to reduce health
+        if (playerWithDamage.damage && typeof playerWithDamage.damage === 'function') {
+            playerWithDamage.damage(); // Call the player's damage method to reduce health
+        } else {
+            console.warn('Player damage method not found');
+        }
+    
+        bullet.destroy(); // Destroy the bullet
+        
+        // Apply damage to the player 
+        if (playerWithDamage.damage && typeof playerWithDamage.damage === 'function') {
+            playerWithDamage.damage(); // Call the player's damage method to reduce health
         } else {
             console.warn('Player damage method not found');
         }

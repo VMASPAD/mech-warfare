@@ -1,22 +1,28 @@
+class CustomSprite extends Phaser.Physics.Arcade.Sprite {
+    damage: () => void;
+}
+
 export class Player {
     scene: Phaser.Scene;
-    player: Phaser.Physics.Arcade.Sprite | null;
+    player: CustomSprite | null;
     cursors: any;
     health: number;
     isInitialized: boolean;
     healthBar: Phaser.GameObjects.Graphics;
+    wave: number; // Add wave property
     gameOverText: Phaser.GameObjects.Text | null; // Texto de Game Over
     restartButton: Phaser.GameObjects.Text | null; // Botón para reiniciar
-
+    returnMenu: Phaser.GameObjects.Text | null; // Botón para ir al menu
     constructor(scene: Phaser.Scene) {
         this.scene = scene;
         this.player = null;
         this.cursors = null;
         this.health = 3;
         this.isInitialized = false;
-        this.healthBar = null;
+        this.healthBar = this.scene.add.graphics();
         this.gameOverText = null; // Inicializar el texto de Game Over
         this.restartButton = null; // Inicializar el botón de reinicio
+        this.returnMenu = null; // Inicializar el botón de reinicio
     }
 
     preload() {
@@ -35,14 +41,14 @@ export class Player {
         }
 
         try {
-            this.player = this.scene.physics.add.sprite(400, 300, 'mech');
+            this.player = this.scene.physics.add.sprite(400, 300, 'mech') as CustomSprite;
             if (!this.player) {
                 throw new Error('Failed to create player sprite');
             }
             this.player.setCollideWorldBounds(true);
             this.player.damage = this.damage.bind(this);
 
-            this.cursors = this.scene.input.keyboard.addKeys({
+            this.cursors = this?.scene?.input?.keyboard?.addKeys({
                 W: Phaser.Input.Keyboard.KeyCodes.W,
                 A: Phaser.Input.Keyboard.KeyCodes.A,
                 S: Phaser.Input.Keyboard.KeyCodes.S,
@@ -75,12 +81,14 @@ export class Player {
         const healthPercentage = this.health / 3;
         this.healthBar.clear();
         this.healthBar.fillStyle(0x00ff00, 1);
-        this.healthBar.fillRect(
-            this.player.x - 25,
-            this.player.y - 30,
-            50 * healthPercentage,
-            5
-        );
+        if (this.player) {
+            this.healthBar.fillRect(
+                this.player.x - 25,
+                this.player.y - 30,
+                50 * healthPercentage,
+                5
+            );
+        }
     }
 
     damage() {
@@ -111,7 +119,7 @@ export class Player {
             this.scene.cameras.main.centerX, 
             this.scene.cameras.main.centerY - 50, 
             'Game Over', 
-            { fontSize: '64px', fill: '#ff0000' }
+            { fontSize: '64px', color: '#ff0000' }
         ).setOrigin(0.5);
 
         // Mostrar el botón de reinicio
@@ -119,13 +127,26 @@ export class Player {
             this.scene.cameras.main.centerX, 
             this.scene.cameras.main.centerY + 50, 
             'Restart Game', 
-            { fontSize: '32px', fill: '#ffffff' }
-        ).setOrigin(0.5).setInteractive();
+            { fontSize: '32px', color: '#ffffff' }
+        ).setOrigin(0.5).setInteractive().setDepth(10);
 
         // Agregar la acción de reiniciar el juego cuando se haga clic en el botón
         this.restartButton.on('pointerdown', () => {
             this.scene.scene.restart(); // Reiniciar la escena actual (Game Scene)
+            this.wave = 1; // Reiniciar la oleada a 1
         });
+        
+
+        this.returnMenu = this.scene.add.text(
+            this.scene.cameras.main.centerX, 
+            this.scene.cameras.main.centerY + 100, 
+            'Return Menu', 
+            { fontSize: '32px', color: '#ffffff' }
+        ).setOrigin(0.5).setInteractive();
+        this.returnMenu.on('pointerdown', () => {
+            this.scene.scene.start('Start'); // Cambiar a la escena de inicio
+        });
+        
     }
 
     shoot() {

@@ -1,14 +1,23 @@
 export class Enemy {
     scene: Phaser.Scene;
     healthBar: Phaser.GameObjects.Graphics;
+    player: any;
+    enemy: Phaser.Physics.Arcade.Sprite | null;
+    cannon: Phaser.Physics.Arcade.Sprite | null;
+    health: number;
+    bullets: Phaser.Physics.Arcade.Group;
+    shootDelay: number;
+    isAlive: boolean;
+    tankRotationSpeed: number;
+    cannonRotationSpeed: number;
 
-    constructor(scene, player) {
+    constructor(scene: Phaser.Scene, player: any) {
         this.scene = scene;
         this.player = player;
         this.enemy = null;
         this.cannon = null;
         this.health = 3;
-        this.healthBar = null;
+        this.healthBar = this.scene.add.graphics();
         this.bullets = this.scene.physics.add.group();
         this.shootDelay = 1000; // Intervalo de disparo en milisegundos
         this.isAlive = true; // Bandera para verificar si el enemigo está vivo
@@ -19,10 +28,12 @@ export class Enemy {
     preload() { 
     }
 
-    create(x, y) {
+    create(x: number, y: number) {
         // Crear el tanque
         this.enemy = this.scene.physics.add.sprite(x, y, "tank");
-        this.enemy.setCollideWorldBounds(true); // Asegura que el enemigo no salga del mundo
+        if (this.enemy) {
+            this.enemy.setCollideWorldBounds(true); // Asegura que el enemigo no salga del mundo
+        }
         this.enemy.setDepth(2); // Establecer la profundidad del enemigo
 
         // Crear el cañón del tanque en la misma posición
@@ -38,7 +49,7 @@ export class Enemy {
             this.enemy,
             this.player,
             this.handlePlayerHit,
-            null,
+            undefined,
             this
         );
 
@@ -68,16 +79,23 @@ export class Enemy {
         const healthPercentage = this.health / 5;
         this.healthBar.clear();
         this.healthBar.fillStyle(0x00ff00, 1); // Verde para vida
-        this.healthBar.fillRect(
-            this.enemy.x - 25,
-            this.enemy.y - 30, // Ajustado para que esté más cerca del tanque
-            50 * healthPercentage,
-            5 // Cambia la altura a 10px
-        );
+        if (this.enemy) {
+            this.healthBar.fillRect(
+                this.enemy.x - 25,
+                this.enemy.y - 30, // Ajustado para que esté más cerca del tanque
+                50 * healthPercentage,
+                5 // Cambia la altura a 10px
+            );
+        }
     }
 
     shoot() {
         if (!this.isAlive) return; // Salir si el enemigo no está vivo
+
+        if (!this.cannon) {
+            console.warn('Cannon is not initialized');
+            return;
+        }
 
         const bullet = this.bullets.create(
             this.cannon.x,
@@ -99,20 +117,20 @@ export class Enemy {
         this.scene.physics.add.collider(
             bullet,
             this.player,
-            this.hitPlayer,
-            null,
+            this.hitPlayer as unknown as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
+            undefined,
             this
         );
 
         // Destruir la bala cuando sale de los límites del mundo
-        this.scene.physics.world.on('worldbounds', (body) => {
+        this.scene.physics.world.on('worldbounds', (body: { gameObject: any; }) => {
             if (body.gameObject === bullet) {
                 bullet.destroy();
             }
         });
     }
 
-    hitPlayer(bullet, playerSprite) {
+    hitPlayer(bullet: { destroy: () => void; }, playerSprite: { damage: () => void; }) {
         bullet.destroy(); // Destruir la bala
 
         if (playerSprite.damage && typeof playerSprite.damage === "function") {
@@ -122,11 +140,11 @@ export class Enemy {
         }
     }
 
-    handlePlayerHit(enemy, player) {
+    handlePlayerHit(enemy: any, player: any) {
         // Lógica de lo que pasa cuando el enemigo colisiona con el jugador
     }
 
-    takeDamage(Xball, Yball) {
+    takeDamage(Xball: number, Yball: number) {
         this.health--; // Reducir la salud del enemigo
         this.updateHealthBar(); // Actualizar la barra de vida
 
@@ -140,8 +158,12 @@ export class Enemy {
         if (this.health <= 0) {
             console.log("Enemy destroyed!");
             this.isAlive = false; // Establecer que el enemigo ya no está vivo
-            this.enemy.destroy(); // Destruir el tanque enemigo
-            this.cannon.destroy(); // Destruir el cañón
+            if (this.enemy) {
+                this.enemy.destroy(); // Destruir el tanque enemigo
+            }
+            if (this.cannon) {
+                this.cannon.destroy(); // Destruir el cañón
+            }
             this.healthBar.destroy(); // Destruir la barra de vida
             this.scene.time.delayedCall(1000, this.onEnemyDestroyed, [], this); // Espera un segundo antes de permitir el movimiento de los enemigos
         }
@@ -184,17 +206,21 @@ export class Enemy {
             )
         );
     
-        this.cannon.x = this.enemy.x;
-        this.cannon.y = this.enemy.y;
+        if (this.cannon && this.enemy) {
+            this.cannon.x = this.enemy.x;
+            this.cannon.y = this.enemy.y;
+        }
     
         // Hacer que el cañón gire más rápidamente
-        this.cannon.rotation = Phaser.Math.Angle.Wrap(
-            Phaser.Math.Angle.RotateTo(
-                this.cannon.rotation,
-                angle,
-                this.cannonRotationSpeed
-            )
-        );
+        if (this.cannon) {
+            this.cannon.rotation = Phaser.Math.Angle.Wrap(
+                Phaser.Math.Angle.RotateTo(
+                    this.cannon.rotation,
+                    angle,
+                    this.cannonRotationSpeed
+                )
+            );
+        }
     
         // Actualizar la barra de vida para que siga al enemigo
         this.updateHealthBar();
