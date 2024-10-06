@@ -1,15 +1,10 @@
-class CustomSprite extends Phaser.Physics.Arcade.Sprite {
-    damage: () => void;
-}
-
 export class Player {
     scene: Phaser.Scene;
-    player: CustomSprite | null;
+    player: Phaser.Physics.Arcade.Sprite & { damage?: () => void } | null;
     cursors: any;
     health: number;
     isInitialized: boolean;
     healthBar: Phaser.GameObjects.Graphics;
-    wave: number; // Add wave property
     gameOverText: Phaser.GameObjects.Text | null; // Texto de Game Over
     restartButton: Phaser.GameObjects.Text | null; // Botón para reiniciar
     returnMenu: Phaser.GameObjects.Text | null; // Botón para ir al menu
@@ -17,7 +12,7 @@ export class Player {
         this.scene = scene;
         this.player = null;
         this.cursors = null;
-        this.health = 3;
+        this.health = parseInt(localStorage.getItem('enemyBulletDamage') || '5');
         this.isInitialized = false;
         this.healthBar = this.scene.add.graphics();
         this.gameOverText = null; // Inicializar el texto de Game Over
@@ -32,6 +27,7 @@ export class Player {
         this.scene.load.image('cannonTank', 'canonTank.png');
         this.scene.load.image('enemyBullet', 'ball.png');
         this.scene.load.image("spriteBall", "spriteBall.png");
+        this.scene.load.image('bullet', 'bullet.png'); // Cargar la imagen de la bala
     }
 
     create() {
@@ -41,24 +37,27 @@ export class Player {
         }
 
         try {
-            this.player = this.scene.physics.add.sprite(400, 300, 'mech') as CustomSprite;
+            this.player = this.scene.physics.add.sprite(400, 300, 'mech');
             if (!this.player) {
                 throw new Error('Failed to create player sprite');
             }
             this.player.setCollideWorldBounds(true);
             this.player.damage = this.damage.bind(this);
 
-            this.cursors = this?.scene?.input?.keyboard?.addKeys({
-                W: Phaser.Input.Keyboard.KeyCodes.W,
-                A: Phaser.Input.Keyboard.KeyCodes.A,
-                S: Phaser.Input.Keyboard.KeyCodes.S,
-                D: Phaser.Input.Keyboard.KeyCodes.D
-            });
+            if (this.scene.input.keyboard) {
+                this.cursors = this.scene.input.keyboard.addKeys({
+                    W: Phaser.Input.Keyboard.KeyCodes.W,
+                    A: Phaser.Input.Keyboard.KeyCodes.A,
+                    S: Phaser.Input.Keyboard.KeyCodes.S,
+                    D: Phaser.Input.Keyboard.KeyCodes.D
+                });
+            } else {
+                console.warn('Keyboard input not available');
+            }
 
             this.isInitialized = true;
             console.log('Player initialized successfully');
             
-            // Crear la barra de vida
             this.createHealthBar();
         } catch (error) {
             console.error('Error initializing player:', error);
@@ -80,7 +79,7 @@ export class Player {
     updateHealthBar() {
         const healthPercentage = this.health / 3;
         this.healthBar.clear();
-        this.healthBar.fillStyle(0x00ff00, 1);
+        this.healthBar.fillStyle(parseInt("0x" + localStorage.getItem('playerBarColor') || '0x00ff00'), 1);
         if (this.player) {
             this.healthBar.fillRect(
                 this.player.x - 25,
@@ -94,27 +93,25 @@ export class Player {
     damage() {
         if (!this.isInitialized || !this.player) return;
 
-        this.health -= 1;
+        this.health -= parseInt(localStorage.getItem('enemyBulletDamage') || '5');
         console.log(`Player health: ${this.health}`);
         
         this.updateHealthBar();
 
         if (this.health <= 0) {
             console.log('Player is dead!');
-            this.playerDied(); // Llamar al método para manejar la muerte del jugador
+            this.playerDied();
         }
     }
 
     playerDied() {
         if (this.player) {
-            this.player.destroy(); // Destruye al jugador
+            this.player.destroy();
             this.isInitialized = false;
         }
         
-        // Pausar el juego
         this.scene.physics.pause();
 
-        // Mostrar el texto de Game Over
         this.gameOverText = this.scene.add.text(
             this.scene.cameras.main.centerX, 
             this.scene.cameras.main.centerY - 50, 
@@ -122,21 +119,17 @@ export class Player {
             { fontSize: '64px', color: '#ff0000' }
         ).setOrigin(0.5);
 
-        // Mostrar el botón de reinicio
         this.restartButton = this.scene.add.text(
             this.scene.cameras.main.centerX, 
             this.scene.cameras.main.centerY + 50, 
             'Restart Game', 
             { fontSize: '32px', color: '#ffffff' }
-        ).setOrigin(0.5).setInteractive().setDepth(10);
+        ).setOrigin(0.5).setInteractive();
 
-        // Agregar la acción de reiniciar el juego cuando se haga clic en el botón
         this.restartButton.on('pointerdown', () => {
-            this.scene.scene.restart(); // Reiniciar la escena actual (Game Scene)
-            this.wave = 1; // Reiniciar la oleada a 1
+            this.scene.scene.restart();
         });
         
-
         this.returnMenu = this.scene.add.text(
             this.scene.cameras.main.centerX, 
             this.scene.cameras.main.centerY + 100, 
@@ -144,9 +137,8 @@ export class Player {
             { fontSize: '32px', color: '#ffffff' }
         ).setOrigin(0.5).setInteractive();
         this.returnMenu.on('pointerdown', () => {
-            this.scene.scene.start('Start'); // Cambiar a la escena de inicio
+            this.scene.scene.start('Start');
         });
-        
     }
 
     shoot() {

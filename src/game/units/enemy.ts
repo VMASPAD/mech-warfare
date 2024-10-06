@@ -16,7 +16,7 @@ export class Enemy {
         this.player = player;
         this.enemy = null;
         this.cannon = null;
-        this.health = 3;
+        this.health = parseInt(localStorage.getItem('enemyHealth') || '5');
         this.healthBar = this.scene.add.graphics();
         this.bullets = this.scene.physics.add.group();
         this.shootDelay = 1000; // Intervalo de disparo en milisegundos
@@ -78,7 +78,7 @@ export class Enemy {
     updateHealthBar() {
         const healthPercentage = this.health / 5;
         this.healthBar.clear();
-        this.healthBar.fillStyle(0x00ff00, 1); // Verde para vida
+        this.healthBar.fillStyle(parseInt("0x" + localStorage.getItem('enemyBarColor') || '0x00ff00'), 1); // Verde para vida
         if (this.enemy) {
             this.healthBar.fillRect(
                 this.enemy.x - 25,
@@ -145,7 +145,8 @@ export class Enemy {
     }
 
     takeDamage(Xball: number, Yball: number) {
-        this.health--; // Reducir la salud del enemigo
+        this.health -= parseInt(localStorage.getItem('playerBulletDamage') || '5'); // Reducir la salud del enemigo
+         console.log(this.health); 
         this.updateHealthBar(); // Actualizar la barra de vida
 
         const sprite = this.scene.add.sprite(Xball, Yball, 'spriteBall');

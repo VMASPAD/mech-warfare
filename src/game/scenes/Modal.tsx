@@ -25,7 +25,6 @@ function Modal({ onClose} : any ) {
             return "";
         }
         return data;
-        return data
     }
     function saveData() {
         const enemyBarColor = document.getElementById("enemyBarColor") as HTMLInputElement;
@@ -37,8 +36,8 @@ function Modal({ onClose} : any ) {
         const playerBulletDamage = document.getElementById("playerBulletDamage") as HTMLInputElement;
         const enemyBulletDamage = document.getElementById("enemyBulletDamage") as HTMLInputElement;
 
-        saveNewData("enemyBarColor", enemyBarColor.value);
-        saveNewData("playerBarColor", playerBarColor.value);
+        saveNewData("enemyBarColor", enemyBarColor.value.replace("#", ""));
+        saveNewData("playerBarColor", playerBarColor.value.replace("#", ""));
         saveNewData("waveCount", waveCount.value);
         saveNewData("enemyPercentagePerWave", enemyPercentagePerWave.value);
         saveNewData("playerHealth", playerHealth.value);
@@ -56,35 +55,35 @@ function Modal({ onClose} : any ) {
                     <AlertDialogDescription>
                         <p>Change enemy bar color (ONLY HEX)</p>
                         <Label htmlFor="enemyBarColor">{getData("enemyBarColor")}</Label>
-                        <Input type="color" id="enemyBarColor" />
+                        <Input type="color" id="enemyBarColor" defaultValue="#000000"/>
                         <Separator className="my-3" />
                         <p>Change player bar color (ONLY HEX)</p>
                         <Label htmlFor="playerBarColor">{getData("playerBarColor")}</Label>
-                        <Input type="color" id="playerBarColor" />
+                        <Input type="color" id="playerBarColor" defaultValue="#a03300" />
                         <Separator className="my-3" />
                         <p>Number of waves</p>
                         <Label htmlFor="waveCount">{getData("waveCount")}</Label>
-                        <Input type="number" id="waveCount" />
+                        <Input type="number" id="waveCount" defaultValue={3}/>
                         <Separator className="my-3" />
-                        <p>Enemy percentage per wave (e.g., 2%)</p>
+                        <p>Enemy percentage per wave (e.g., 1.05 ==&gt; "5%")</p>
                         <Label htmlFor="enemyPercentagePerWave">{getData("enemyPercentagePerWave")}</Label>
-                        <Input type="number" id="enemyPercentagePerWave" />
+                        <Input type="number" id="enemyPercentagePerWave" defaultValue={3}/>
                         <Separator className="my-3" />
                         <p>Player health</p>
                         <Label htmlFor="playerHealth">{getData("playerHealth")}</Label>
-                        <Input type="number" id="playerHealth" />
+                        <Input type="number" id="playerHealth" defaultValue={3}/>
                         <Separator className="my-3" />
                         <p>Enemy health</p>
                         <Label htmlFor="enemyHealth">{getData("enemyHealth")}</Label>
-                        <Input type="number" id="enemyHealth" />
+                        <Input type="number" id="enemyHealth" defaultValue={3}/>
                         <Separator className="my-3" />
                         <p>Player bullet damage</p>
                         <Label htmlFor="playerBulletDamage">{getData("playerBulletDamage")}</Label>
-                        <Input type="number" id="playerBulletDamage" />
+                        <Input type="number" id="playerBulletDamage" defaultValue={1}/>
                         <Separator className="my-3" />
                         <p>Enemy bullet damage</p>
                         <Label htmlFor="enemyBulletDamage">{getData("enemyBulletDamage")}</Label>
-                        <Input type="number" id="enemyBulletDamage" />
+                        <Input type="number" id="enemyBulletDamage" defaultValue={1}/>
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

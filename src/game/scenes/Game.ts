@@ -24,7 +24,7 @@ export class Game extends Scene {
         this.enemies = [];
         this.wave = 1;
         this.enemyCount = 10;
-        this.maxWaves = 1;
+        this.maxWaves = parseInt(localStorage.getItem('waveCount') || '3');
         this.waveText = null;
         this.maxWaveText = null;
         this.isPaused = false;
@@ -179,7 +179,7 @@ export class Game extends Scene {
             callback: () => {
                 if (!this.isGameOver && this.enemies.every(enemy => !enemy.isAlive)) {
                     this.wave++;
-                    this.enemyCount = Math.floor(this.enemyCount * 1.05);
+                    this.enemyCount = Math.floor(this.enemyCount * parseInt(localStorage.getItem('enemyPercentagePerWave') || '3'));
                     this.updateHUD();
                     if (this.wave < this.maxWaves) {
                         this.spawnEnemies(this.enemyCount);
